@@ -44,10 +44,8 @@ class APIResource {
             $json = $json->report->food;
             $this->_reassign($json, 'ndbno', 'id');
             $this->_batchReassign($json->nutrients, 'nutrient_id', 'id');
-            $json->nutrients =
-            
-            
-            array_filter($json->nutrients, function(&$obj) use($nutrients) {
+            print_r($json);
+            $json->nutrients = array_filter($json->nutrients, function(&$obj) use($nutrients) {
                 if ( isset($nutrients[$obj->id]) ) {
                     $obj->name = $nutrients[$obj->id];
                     return true;
