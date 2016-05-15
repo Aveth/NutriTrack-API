@@ -43,8 +43,8 @@ class APIResource {
             $json = json_decode($contents);
             $json = $json->report->food;
             $this->_reassign($json, 'ndbno', 'id');
+            $this->_reassign($json, 'fg', 'category');
             $this->_batchReassign($json->nutrients, 'nutrient_id', 'id');
-            print_r($json);
             $json->nutrients = array_filter($json->nutrients, function(&$obj) use($nutrients) {
                 if ( isset($nutrients[$obj->id]) ) {
                     $obj->name = $nutrients[$obj->id];
@@ -54,24 +54,30 @@ class APIResource {
             });
             $json->nutrients = array_values($json->nutrients);
             $this->_prepareDetails($json);
+
+            $this->_unsetExcept($json, array('name', 'id', 'category', 'measures', 'nutrients'));
+
             return $json;
         }
         return false;
+    }
+
+    private function _unsetExcept(&$obj, $props = array()) {
+        foreach ( $obj as $key => $value ) {
+            if ( !in_array($key, $props) ) {
+                unset($obj->$key);
+            }
+        }
     }
     
     private function _prepareDetails(&$details) {
         $nutrients = [];
         $measures = [];
         $index = 0;
-        $measures[] = (object)[
-            'index' => $index,
-            'name' => '100 g',
-            'value' => 100
-        ];
         foreach ( $details->nutrients[0]->measures as $measure ) {
             $measures[] = (object)[
-                'index' => ++$index,
-                'name' => $measure->label,
+                'index' => $index++,
+                'name' => $measure->qty == 1.0 ? $measure->label : $measure->qty.' '.$measure->label,
                 'value' => $measure->eqv,
             ];
         }
@@ -145,6 +151,7 @@ class APIResource {
         $params['api_key'] = $this->_configItem('api_key');
         $params['format'] = 'json';
         $params['max'] = 500;
+        $params['type'] = 'f';
         return $this->_configItem('base_url').$endpoint.'/?'.http_build_query($params);
     }
     

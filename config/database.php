@@ -62,7 +62,7 @@ return [
 			'collation' => 'utf8_unicode_ci',
 			'prefix'    => '',
 			'strict'    => false,
-			'unix_socket' => $_SERVER['HTTP_HOST'] === 'localhost' ? '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock' : NULL
+			'unix_socket' => !isset($_SERVER['HTTP_HOST']) || $_SERVER['HTTP_HOST'] === 'localhost' ? '/Applications/XAMPP/xamppfiles/var/mysql/mysql.sock' : NULL
 		],
 
 		'pgsql' => [
