@@ -1,7 +1,7 @@
 <?php namespace App;
 
-use App\Search;
-use App\Nutrients;
+use App\Models\Search;
+use App\Models\Nutrients;
 
 class APIResource {
      

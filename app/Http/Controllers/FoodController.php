@@ -1,17 +1,15 @@
-<?php
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Response;
-use App\Search;
-use App\Nutrient;
+use App\Models\Search;
+use App\Models\Nutrient;
+use App\Models\Category;
 use App\APIResource;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class FoodController extends Controller {
     
-    private $_configPath = 'services.usda.';
-
     public function search(Request $request, $query) {
         $results = APIResource::resource('search')->get($query);
         if ( $results ) {
@@ -26,9 +24,13 @@ class FoodController extends Controller {
     }
     
     public function nutrients() {
-        return $this->response(Nutrient::select('id', 'name', 'unit')->where('is_active', true)->get());
+        return $this->response(Nutrient::getActive());
     }
-    
+
+    public function categories() {
+        return $this->response(Category::get());
+    }
+
     public function details(Request $request, $ids) {
         $ids = explode(',', $ids);
         $response = [];
