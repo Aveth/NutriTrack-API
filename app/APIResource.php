@@ -1,7 +1,7 @@
 <?php namespace App;
 
 use App\Models\Search;
-use App\Models\Nutrients;
+use App\Models\Nutrient;
 
 class APIResource {
      
@@ -28,9 +28,13 @@ class APIResource {
             $json = json_decode($contents);
             $json = $json->list->item;
             $this->_batchReassign($json, 'ndbno', 'id');
+            $this->_batchReassign($json, 'group', 'category');
             usort($json, function($a, $b) use($param) {
                return $this->_sort($a, $b, $param);
             });
+
+            $this->_unsetExcept($json, array('name', 'id', 'category'));
+
             return $json;
         }
         return false;
