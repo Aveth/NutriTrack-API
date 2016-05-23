@@ -11,6 +11,7 @@
 |
 */
 
+Route::get('food/category/{category}', 'FoodController@category');
 Route::get('food/search/{query}', 'FoodController@search');
 Route::get('food/details/{id}', 'FoodController@details');
 Route::get('food/nutrients', 'FoodController@nutrients');

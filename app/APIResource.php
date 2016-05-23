@@ -22,15 +22,19 @@ class APIResource {
         return $this->$method($param);
     }
     
-    public function search($param) {
-        $contents = @file_get_contents($this->_getURL('search', ['q' => $param]));
+    public function search($query, $category = null) {
+        $params = ['q' => $query];
+        if ( isset($category) ) {
+            $params['fg'] = $category;
+        }
+        $contents = @file_get_contents($this->_getURL('search', $params));
         if ( $contents ) {
             $json = json_decode($contents);
             $json = $json->list->item;
             $this->_batchReassign($json, 'ndbno', 'id');
             $this->_batchReassign($json, 'group', 'category');
-            usort($json, function($a, $b) use($param) {
-               return $this->_sort($a, $b, $param);
+            usort($json, function($a, $b) use($query) {
+               return $this->_sort($a, $b, $query);
             });
 
             $this->_unsetExcept($json, array('name', 'id', 'category'));
@@ -38,6 +42,10 @@ class APIResource {
             return $json;
         }
         return false;
+    }
+
+    public function category($category) {
+        return $this->search('', $category);
     }
     
     public function details($param) {
@@ -97,11 +105,13 @@ class APIResource {
         $details->measures = $measures;
     }
     
-    private function _sort($a, $b, $query) {
+    private function _sort($a, $b, $query = null) {
         $diff = 0;
         $diff += $this->_sortByClicks($a, $b);
-        $diff += $this->_sortByRelevance($a, $b, $query);
         $diff += $this->_sortByLength($a, $b);
+        if ( isset($query) && strlen($query) > 0 ) {
+            $diff += $this->_sortByRelevance($a, $b, $query);
+        }
         return $diff;
     }
     
