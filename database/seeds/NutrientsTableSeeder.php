@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
-use App\Nutrient;
+use App\Models\Nutrient;
 
 class NutrientsTableSeeder extends Seeder {
 

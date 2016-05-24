@@ -2,7 +2,7 @@
 
 use Illuminate\Database\Seeder;
 use Carbon\Carbon;
-use App\Category;
+use App\Models\Category;
 
 class CategoriesTableSeeder extends Seeder {
 
