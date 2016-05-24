@@ -1,4 +1,4 @@
-<?php namespace App;
+<?php namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
@@ -11,6 +11,10 @@ class Nutrient extends Model {
 		return $this->belongsToMany('App\User', 'user_nutrients')->withTimestamps();
 	}
 	
+	public static function getActive() {
+		return static::where('is_active', true)->get();
+	}
+
 	public static function findInvalid($ids = []) {
 		$invalid = [];
 		foreach ( $ids as $id ) {

@@ -1,7 +1,7 @@
 <?php namespace App;
 
-use App\Search;
-use App\Nutrients;
+use App\Models\Search;
+use App\Models\Nutrient;
 
 class APIResource {
      
@@ -22,18 +22,30 @@ class APIResource {
         return $this->$method($param);
     }
     
-    public function search($param) {
-        $contents = @file_get_contents($this->_getURL('search', ['q' => $param]));
+    public function search($query, $category = null) {
+        $params = ['q' => $query];
+        if ( isset($category) ) {
+            $params['fg'] = $category;
+        }
+        $contents = @file_get_contents($this->_getURL('search', $params));
         if ( $contents ) {
             $json = json_decode($contents);
             $json = $json->list->item;
             $this->_batchReassign($json, 'ndbno', 'id');
-            usort($json, function($a, $b) use($param) {
-               return $this->_sort($a, $b, $param);
+            $this->_batchReassign($json, 'group', 'category');
+            usort($json, function($a, $b) use($query) {
+               return $this->_sort($a, $b, $query);
             });
+
+            $this->_unsetExcept($json, array('name', 'id', 'category'));
+
             return $json;
         }
         return false;
+    }
+
+    public function category($category) {
+        return $this->search('', $category);
     }
     
     public function details($param) {
@@ -43,11 +55,9 @@ class APIResource {
             $json = json_decode($contents);
             $json = $json->report->food;
             $this->_reassign($json, 'ndbno', 'id');
+            $this->_reassign($json, 'fg', 'category');
             $this->_batchReassign($json->nutrients, 'nutrient_id', 'id');
-            $json->nutrients =
-            
-            
-            array_filter($json->nutrients, function(&$obj) use($nutrients) {
+            $json->nutrients = array_filter($json->nutrients, function(&$obj) use($nutrients) {
                 if ( isset($nutrients[$obj->id]) ) {
                     $obj->name = $nutrients[$obj->id];
                     return true;
@@ -56,24 +66,30 @@ class APIResource {
             });
             $json->nutrients = array_values($json->nutrients);
             $this->_prepareDetails($json);
+
+            $this->_unsetExcept($json, array('name', 'id', 'category', 'measures', 'nutrients'));
+
             return $json;
         }
         return false;
+    }
+
+    private function _unsetExcept(&$obj, $props = array()) {
+        foreach ( $obj as $key => $value ) {
+            if ( !in_array($key, $props) ) {
+                unset($obj->$key);
+            }
+        }
     }
     
     private function _prepareDetails(&$details) {
         $nutrients = [];
         $measures = [];
         $index = 0;
-        $measures[] = (object)[
-            'index' => $index,
-            'name' => '100 g',
-            'value' => 100
-        ];
         foreach ( $details->nutrients[0]->measures as $measure ) {
             $measures[] = (object)[
-                'index' => ++$index,
-                'name' => $measure->label,
+                'index' => $index++,
+                'name' => $measure->qty == 1.0 ? $measure->label : $measure->qty.' '.$measure->label,
                 'value' => $measure->eqv,
             ];
         }
@@ -89,11 +105,13 @@ class APIResource {
         $details->measures = $measures;
     }
     
-    private function _sort($a, $b, $query) {
+    private function _sort($a, $b, $query = null) {
         $diff = 0;
         $diff += $this->_sortByClicks($a, $b);
-        $diff += $this->_sortByRelevance($a, $b, $query);
         $diff += $this->_sortByLength($a, $b);
+        if ( isset($query) && strlen($query) > 0 ) {
+            $diff += $this->_sortByRelevance($a, $b, $query);
+        }
         return $diff;
     }
     
@@ -147,6 +165,7 @@ class APIResource {
         $params['api_key'] = $this->_configItem('api_key');
         $params['format'] = 'json';
         $params['max'] = 500;
+        $params['type'] = 'f';
         return $this->_configItem('base_url').$endpoint.'/?'.http_build_query($params);
     }
     

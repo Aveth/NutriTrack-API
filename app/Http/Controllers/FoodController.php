@@ -1,35 +1,32 @@
-<?php
-namespace App\Http\Controllers;
+<?php namespace App\Http\Controllers;
 
 use Response;
-use App\Search;
-use App\Nutrient;
+use App\Models\Search;
+use App\Models\Nutrient;
+use App\Models\Category;
 use App\APIResource;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
 class FoodController extends Controller {
     
-    private $_configPath = 'services.usda.';
+    public function search($query) {
+        return $this->_preparedSearchResults('search', $query);
+    }
 
-    public function search(Request $request, $query) {
-        $results = APIResource::resource('search')->get($query);
-        if ( $results ) {
-            return $this->response([
-                'query' => $query,
-                'results' => $results
-            ]);
-        }
-        return $this->errorResponse([
-            $this->getError('err_no_results', 'No results found for the search parameter')
-        ], 404);
+    public function category($category) {
+        return $this->_preparedSearchResults('category', $category);
     }
     
     public function nutrients() {
-        return $this->response(Nutrient::select('id', 'name', 'unit')->where('is_active', true)->get());
+        return $this->response(Nutrient::getActive());
     }
-    
-    public function details(Request $request, $ids) {
+
+    public function categories() {
+        return $this->response(Category::get());
+    }
+
+    public function details($ids) {
         $ids = explode(',', $ids);
         $response = [];
         foreach ( $ids as $id ) {
@@ -42,7 +39,20 @@ class FoodController extends Controller {
         }
         return $this->response($response);
     }
-    
+
+    private function _preparedSearchResults($resourceType, $query) {
+        $results = APIResource::resource($resourceType)->get($query);
+        if ( $results ) {
+            return $this->response([
+                'query' => $query,
+                'results' => $results
+            ]);
+        }
+        return $this->errorResponse([
+            $this->getError('err_no_results', 'No results found for the search parameter')
+        ], 404);
+    }
+
     private function _addSearch($food) {
         $search = Search::find($food->id);
         if ( !$search ) {

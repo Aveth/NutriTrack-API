@@ -1,8 +1,8 @@
 <?php namespace App\Http\Controllers;
 
 use Response;
-use App\User;
-use App\Nutrient;
+use App\Models\User;
+use App\Models\Nutrient;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 
